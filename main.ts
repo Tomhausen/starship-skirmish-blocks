@@ -2,7 +2,29 @@ namespace SpriteKind {
     export const enemy_projectile = SpriteKind.create()
     export const centre = SpriteKind.create()
 }
+controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (powerup_bar.value == powerup_bar.max) {
+        powerup_overheated = true
+        powerup_bar.value = 0
+        powerup_bar.setColor(2, 2)
+        launch_angle = 0
+        for (let index = 0; index < 2; index++) {
+            for (let index = 0; index < 18; index++) {
+                launch_angle += 10
+                fire_at_angle(launch_angle)
+            }
+            for (let index = 0; index < 18; index++) {
+                launch_angle += -10
+                fire_at_angle(launch_angle)
+            }
+        }
+        powerup_cooldown()
+    }
+})
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Enemy, function (projectile, enemy) {
+    if (!(powerup_overheated)) {
+        powerup_bar.value += 5
+    }
     info.changeScoreBy(100)
     projectile.destroy()
     enemy.destroy(effects.fire, 100)
@@ -27,10 +49,23 @@ function player_movement () {
     }
     ship.vx = ship.vx * deceleration
 }
+function powerup_cooldown () {
+    pause(5000)
+    powerup_overheated = false
+    powerup_bar.setColor(8, 11)
+    music.play(music.melodyPlayable(music.jumpUp), music.PlaybackMode.InBackground)
+}
 function enemy_fire (enemy: Sprite) {
     proj = sprites.createProjectileFromSprite(assets.image`enemy projectile`, enemy, 0, enemy_shot_speed)
     proj.setKind(SpriteKind.enemy_projectile)
     music.pewPew.play()
+}
+function fire_at_angle (angle: number) {
+    angle_in_rads = 0
+    projectile = sprites.createProjectileFromSprite(assets.image`player projectile`, ship, 0, 0)
+    spriteutils.setVelocityAtAngle(projectile, spriteutils.degreesToRadians(angle), player_shot_speed)
+    music.play(music.melodyPlayable(music.thump), music.PlaybackMode.InBackground)
+    pause(20)
 }
 function player_hit (player2: Sprite, enemy: Sprite) {
     info.changeLifeBy(-1)
@@ -81,8 +116,12 @@ let start_x = 0
 let enemy: Sprite = null
 let y_offset = 0
 let x_offset = 0
+let angle_in_rads = 0
 let proj: Sprite = null
 let projectile: Sprite = null
+let launch_angle = 0
+let powerup_bar: StatusBarSprite = null
+let powerup_overheated = false
 let formation_center: Sprite = null
 let ship: Sprite = null
 let enemy_shot_speed = 0
@@ -120,6 +159,11 @@ formation_center.setVelocity(randint(-10, 10), randint(-10, 10))
 info.setLife(3)
 info.setScore(0)
 effects.starField.startScreenEffect()
+powerup_overheated = false
+powerup_bar = statusbars.create(60, 2, StatusBarKind.Magic)
+powerup_bar.setPosition(128, 118)
+powerup_bar.max = 100
+powerup_bar.value = 0
 game.onUpdate(function () {
     player_movement()
     if (sprites.allOfKind(SpriteKind.Enemy).length > 0) {
@@ -127,7 +171,7 @@ game.onUpdate(function () {
     }
     constrain_formation_position()
 })
-game.onUpdateInterval(7500, function () {
+game.onUpdateInterval(5000, function () {
     start_x = randint(0, 1) * 160
     start_y = randint(0, 90)
     for (let index = 0; index < randint(3, 6); index++) {
