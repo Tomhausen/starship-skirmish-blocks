@@ -136,24 +136,7 @@ ship = sprites.create(assets.image`ship`, SpriteKind.Player)
 ship.y = 108
 ship.z = 5
 ship.setStayInScreen(true)
-formation_center = sprites.create(img`
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    `, SpriteKind.centre)
+formation_center = sprites.create(assets.image`empty`, SpriteKind.centre)
 formation_center.setBounceOnWall(true)
 formation_center.setVelocity(randint(-10, 10), randint(-10, 10))
 info.setLife(3)
