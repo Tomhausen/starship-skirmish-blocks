@@ -1,6 +1,7 @@
 namespace SpriteKind {
     export const enemy_projectile = SpriteKind.create()
     export const centre = SpriteKind.create()
+    export const boss = SpriteKind.create()
 }
 controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
     if (powerup_bar.value == powerup_bar.max) {
@@ -102,6 +103,39 @@ function spawn_enemy (start_x: number, start_y: number) {
     enemy.setPosition(start_x, start_y)
     set_offset(enemy)
 }
+sprites.onOverlap(SpriteKind.Projectile, SpriteKind.boss, function (sprite, otherSprite) {
+    boss_healthbar = statusbars.getStatusBarAttachedTo(StatusBarKind.Health, otherSprite)
+    boss_healthbar.value += -2
+    powerup_bar.value += 5
+    if (boss_healthbar.value < 1) {
+        sprites.destroy(otherSprite, effects.fire, 500)
+        info.changeScoreBy(2500)
+    }
+    sprites.destroy(sprite)
+})
+info.onScore(5000, function () {
+    boss_sprite = sprites.create(assets.image`boss`, SpriteKind.boss)
+    boss_sprite.setPosition(randint(20, 140), -20)
+    boss_sprite.z = -5
+    sprites.setDataNumber(boss_sprite, "x_offset", randint(-50, 50))
+    sprites.setDataNumber(boss_sprite, "y_offset", randint(-5, -25))
+    boss_healthbar = statusbars.create(50, 4, StatusBarKind.Health)
+    boss_healthbar.attachToSprite(boss_sprite, -5, 0)
+    boss_healthbar.max = 100
+    boss_healthbar.value = boss_healthbar.max
+})
+function boss_behaviour () {
+    update_enemy_position(boss_sprite, formation_center)
+    if (randint(0, 120) == 0) {
+        sprites.setDataNumber(boss_sprite, "x_offset", randint(-50, 50))
+        sprites.setDataNumber(boss_sprite, "y_offset", randint(-5, -25))
+    }
+    if (randint(0, 120) == 0) {
+        enemy_fire(boss_sprite)
+        lasers = sprites.allOfKind(SpriteKind.enemy_projectile)
+        lasers[lasers.length - 1].scale = 5
+    }
+}
 function set_offset (enemy: Sprite) {
     x_offset = randint(-4, 4) * 16
     y_offset = randint(-3, 1) * 16
@@ -113,6 +147,9 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSp
 })
 let start_y = 0
 let start_x = 0
+let lasers: Sprite[] = []
+let boss_sprite: Sprite = null
+let boss_healthbar: StatusBarSprite = null
 let enemy: Sprite = null
 let y_offset = 0
 let x_offset = 0
@@ -151,6 +188,9 @@ game.onUpdate(function () {
     player_movement()
     if (sprites.allOfKind(SpriteKind.Enemy).length > 0) {
         enemy_behaviour()
+    }
+    if (sprites.allOfKind(SpriteKind.boss).length > 0) {
+        boss_behaviour()
     }
     constrain_formation_position()
 })
