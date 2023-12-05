@@ -23,6 +23,13 @@ controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
     }
 })
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Enemy, function (projectile, enemy) {
+    shield_count = sprites.allOfKind(SpriteKind.Food).length
+    if (randint(1, 10) == 1 && shield_count < 1) {
+        shield = sprites.create(assets.image`shield falling`, SpriteKind.Food)
+        shield.setPosition(enemy.x, enemy.y)
+        shield.setVelocity(0, 50)
+        shield.setFlag(SpriteFlag.AutoDestroy, true)
+    }
     if (!(powerup_overheated)) {
         powerup_bar.value += 5
     }
@@ -62,7 +69,6 @@ function enemy_fire (enemy: Sprite) {
     music.pewPew.play()
 }
 function fire_at_angle (angle: number) {
-    angle_in_rads = 0
     projectile = sprites.createProjectileFromSprite(assets.image`player projectile`, ship, 0, 0)
     spriteutils.setVelocityAtAngle(projectile, spriteutils.degreesToRadians(angle), player_shot_speed)
     music.play(music.melodyPlayable(music.thump), music.PlaybackMode.InBackground)
@@ -113,6 +119,13 @@ sprites.onOverlap(SpriteKind.Projectile, SpriteKind.boss, function (sprite, othe
     }
     sprites.destroy(sprite)
 })
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSprite) {
+    otherSprite.setPosition(sprite.x, sprite.y)
+    otherSprite.follow(sprite, 500)
+    otherSprite.setImage(assets.image`shield`)
+    otherSprite.scale = 2
+    otherSprite.z = 10
+})
 info.onScore(5000, function () {
     boss_sprite = sprites.create(assets.image`boss`, SpriteKind.boss)
     boss_sprite.setPosition(randint(20, 140), -20)
@@ -142,6 +155,12 @@ function set_offset (enemy: Sprite) {
     sprites.setDataNumber(enemy, "x_offset", x_offset)
     sprites.setDataNumber(enemy, "y_offset", y_offset)
 }
+sprites.onOverlap(SpriteKind.enemy_projectile, SpriteKind.Food, function (sprite, otherSprite) {
+    if (otherSprite.overlapsWith(ship)) {
+        sprites.destroy(otherSprite, effects.disintegrate, 500)
+        sprites.destroy(sprite)
+    }
+})
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
     player_hit(sprite, otherSprite)
 })
@@ -153,9 +172,10 @@ let boss_healthbar: StatusBarSprite = null
 let enemy: Sprite = null
 let y_offset = 0
 let x_offset = 0
-let angle_in_rads = 0
 let proj: Sprite = null
 let projectile: Sprite = null
+let shield: Sprite = null
+let shield_count = 0
 let launch_angle = 0
 let powerup_bar: StatusBarSprite = null
 let powerup_overheated = false
